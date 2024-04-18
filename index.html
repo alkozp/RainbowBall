@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        background-color: black;
+      }
+      canvas {
+        display: block;
+        margin: 0 auto;
+        border: 1px solid rgb(33, 33, 33);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="600" height="500"></canvas>
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const ball = {
+        startX: 300,
+        startY: 200,
+        size: 15,
+        motionX: 3,
+        motionY: 3,
+        color: "skyblue",
+      };
+
+      const stdMotionRacket = 4;
+
+      const racket = {
+        startX: 300,
+        startY: 400,
+        width: 100,
+        height: 10,
+        motionX: 0,
+        motionY: 0,
+        color: "yellow",
+      };
+
+      let score = 0;
+
+      function getRandomColor() {
+        const hexLetters = "0123456789ABCDEF".split(""); //array with HEX letters
+        let hexColor = "#"; // started from #
+        for (let i = 0; i < 6; i++) {
+          hexColor = hexColor + hexLetters[Math.round(Math.random() * 15)];
+        }
+        return hexColor;
+      }
+
+      function drawBall() {
+        ctx.beginPath();
+        ctx.arc(ball.startX, ball.startY, ball.size, 0, Math.PI * 2);
+        ctx.fillStyle = ball.color;
+        ctx.fill();
+        ctx.closePath();
+        ctx.beginPath();
+        ctx.arc(ball.startX, ball.startY, ball.size - 1, 0, Math.PI * 2);
+        ctx.fillStyle = ball.color;
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      function drawRacket() {
+        ctx.beginPath();
+        ctx.rect(racket.startX, racket.startY, racket.width, racket.height);
+        ctx.fillStyle = racket.color;
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      function drawScore() {
+        ctx.fillStyle = "#1F1F1F";
+        ctx.fillRect(0, 430, canvas.width, 70);
+        //score
+        ctx.fillStyle = "limegreen";
+        ctx.font = "bold 30px Lucida Console";
+        const formatScore = score.toString().padStart(3, "0");
+        ctx.fillText("score:" + formatScore, 420, 475);
+      }
+
+      function moveRacket() {
+        if (racket.startX + racket.width > canvas.width) {
+          racket.startX = canvas.width - racket.width;
+        } else if (racket.startX < 0) {
+          racket.startX = 0;
+        }
+        racket.startX += racket.motionX;
+      }
+
+      function moveRacketLeft() {
+        if (racket.startX - racket.motionX < 0) {
+          return;
+        }
+        racket.motionX = -stdMotionRacket;
+        moveRacket();
+      }
+
+      function moveRacketRight() {
+        if (racket.startX + racket.width + racket.motionX > canvas.width) {
+          return;
+        }
+        racket.motionX = stdMotionRacket;
+        moveRacket();
+      }
+
+      function keydown(e) {
+        //start moving
+        if (e.key === "ArrowLeft") {
+          moveRacketLeft();
+        } else if (e.key === "ArrowRight") {
+          moveRacketRight();
+        }
+      }
+
+      function keyup(e) {
+        //stop moving
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          racket.motionX = 0;
+          moveRacket();
+        }
+      }
+
+      function moveBall() {
+        //move ball
+        ball.startX += ball.motionX;
+        ball.startY += ball.motionY;
+
+        //vertical check
+        if (
+          ball.startX + ball.size > canvas.width ||
+          ball.startX - ball.size < 0
+        ) {
+          ball.motionX *= -1;
+          ball.color = getRandomColor();
+        }
+        //horizontal check
+        if (ball.startY - ball.size < 0) {
+          ball.motionY *= -1;
+          ball.color = getRandomColor();
+        }
+
+        //fail
+        if (ball.startY + ball.size > canvas.height - 50) {
+          // alert("fail");
+          cancelAnimationFrame(animateScene);
+        }
+
+        //racket check
+        if (
+          ball.startX + ball.size / 2 > racket.startX &&
+          ball.startX - ball.size / 2 < racket.startX + racket.width &&
+          ball.startY + ball.size / 2 + ball.motionY >= racket.startY
+        ) {
+          ball.motionY *= -1;
+          score += 1;
+          ball.color = getRandomColor();
+        }
+      }
+
+      function clearScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function animateScene() {
+        clearScene();
+        drawBall();
+        moveBall();
+        drawRacket();
+        moveRacket();
+        drawScore();
+        requestAnimationFrame(animateScene);
+      }
+      animateScene();
+
+      document.addEventListener("keydown", keydown);
+      document.addEventListener("keyup", keyup);
+    </script>
+  </body>
+</html>
